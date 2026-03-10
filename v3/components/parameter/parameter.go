@@ -5,6 +5,15 @@ import (
 	"strings"
 )
 
+// ComponentExample represents an example object for parameters
+// This is a simplified version to avoid import cycles
+type ComponentExample struct {
+	Summary       string      `json:"summary,omitempty"`
+	Description   string      `json:"description,omitempty"`
+	Value         interface{} `json:"value,omitempty"`
+	ExternalValue string      `json:"externalValue,omitempty"`
+}
+
 // CollectionFormat defines the format for serializing array parameters in the URL query string.
 type CollectionFormat string
 
@@ -61,19 +70,19 @@ const (
 // JsonParameter is the JSON model version of Parameter object used for API purposes
 // https://spec.openapis.org/oas/v3.0.3#parameter-object
 type JsonParameter struct {
-	Name            string                 `json:"name"`
-	In              string                 `json:"in"`
-	Description     string                 `json:"description,omitempty"`
-	Required        bool                   `json:"required,omitempty"`
-	Deprecated      bool                   `json:"deprecated,omitempty"`
-	AllowEmptyValue bool                   `json:"allowEmptyValue,omitempty"`
-	Style           string                 `json:"style,omitempty"`
-	Explode         *bool                  `json:"explode,omitempty"`
-	AllowReserved   bool                   `json:"allowReserved,omitempty"`
-	Schema          *JsonResponseSchema    `json:"schema,omitempty"`
-	Example         interface{}            `json:"example,omitempty"`
-	Examples        map[string]interface{} `json:"examples,omitempty"`
-	Content         map[string]interface{} `json:"content,omitempty"`
+	Name            string                      `json:"name"`
+	In              string                      `json:"in"`
+	Description     string                      `json:"description,omitempty"`
+	Required        bool                        `json:"required,omitempty"`
+	Deprecated      bool                        `json:"deprecated,omitempty"`
+	AllowEmptyValue bool                        `json:"allowEmptyValue,omitempty"`
+	Style           string                      `json:"style,omitempty"`
+	Explode         *bool                       `json:"explode,omitempty"`
+	AllowReserved   bool                        `json:"allowReserved,omitempty"`
+	Schema          *JsonResponseSchema         `json:"schema,omitempty"`
+	Example         interface{}                 `json:"example,omitempty"`
+	Examples        map[string]ComponentExample `json:"examples,omitempty"`
+	Content         map[string]interface{}      `json:"content,omitempty"`
 }
 
 // JsonResponseSchema defines the schema for a JSON response as per the OpenAPI 3.0.3 specification.
@@ -168,6 +177,7 @@ type Parameter struct {
 	explode          bool
 	allowReserved    bool
 	example          interface{}
+	examples         map[string]interface{}
 }
 
 // Location returns the location of the parameter (i.e. Query, Body, Path, and etc.)
@@ -238,6 +248,17 @@ func (p *Parameter) AsJson() JsonParameter {
 	}
 	if p.example != nil {
 		jsonParam.Example = p.example
+	}
+
+	if p.examples != nil {
+		// Convert raw examples to proper ComponentExample objects
+		exampleObjects := make(map[string]ComponentExample)
+		for key, value := range p.examples {
+			exampleObjects[key] = ComponentExample{
+				Value: value,
+			}
+		}
+		jsonParam.Examples = exampleObjects
 	}
 
 	return jsonParam
@@ -490,10 +511,19 @@ func WithAllowReserved() Option {
 	}
 }
 
-// WithExample sets an example value for the parameter.
+// WithExample sets an example value for the parameter and clears multiple examples.
 func WithExample(example interface{}) Option {
 	return func(p *Parameter) {
 		p.example = example
+		p.examples = nil
+	}
+}
+
+// WithExamples sets multiple example values for the parameter and clears a single example.
+func WithExamples(examples map[string]interface{}) Option {
+	return func(p *Parameter) {
+		p.examples = examples
+		p.example = nil
 	}
 }
 

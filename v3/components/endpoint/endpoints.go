@@ -27,10 +27,10 @@ const (
 // MediaType represents a media type object in OpenAPI 3.0
 // https://spec.openapis.org/oas/v3.0.3#media-type-object
 type MediaType struct {
-	Schema   *parameter.JsonResponseSchema `json:"schema,omitempty"`
-	Example  interface{}                   `json:"example,omitempty"`
-	Examples map[string]interface{}        `json:"examples,omitempty"`
-	Encoding map[string]interface{}        `json:"encoding,omitempty"`
+	Schema   *parameter.JsonResponseSchema         `json:"schema,omitempty"`
+	Example  interface{}                           `json:"example,omitempty"`
+	Examples map[string]parameter.ComponentExample `json:"examples,omitempty"`
+	Encoding map[string]interface{}                `json:"encoding,omitempty"`
 }
 
 // Callback represents a callback object in OpenAPI 3.0
@@ -121,6 +121,8 @@ type EndPoint struct {
 		Content     interface{}
 		description string
 		required    *bool
+		example     interface{}
+		examples    map[string]interface{}
 	}
 	successfulReturns []response.Response
 	errors            []response.Response
@@ -230,6 +232,21 @@ func (e *EndPoint) BodyJsonParameter() *parameter.JsonParameter {
 			p.Required = *e.Body.required
 		}
 
+		if e.Body.example != nil {
+			p.Example = e.Body.example
+		}
+
+		if e.Body.examples != nil {
+			// Convert raw examples to proper ComponentExample objects
+			exampleObjects := make(map[string]parameter.ComponentExample)
+			for key, value := range e.Body.examples {
+				exampleObjects[key] = parameter.ComponentExample{
+					Value: value,
+				}
+			}
+			p.Examples = exampleObjects
+		}
+
 		return p
 	}
 
@@ -269,6 +286,8 @@ func WithParams(params ...*parameter.Parameter) EndPointOption {
 type bodyOptions struct {
 	description string
 	required    *bool
+	example     interface{}
+	examples    map[string]interface{}
 }
 
 // WithBodyOptions allows setting additional options for the request body, such as description and whether it's required.
@@ -284,6 +303,22 @@ func WithBodyRequired(required bool) func(*bodyOptions) {
 	}
 }
 
+// WithBodyExample sets an example for the request body and clears multiple examples.
+func WithBodyExample(example interface{}) func(*bodyOptions) {
+	return func(bo *bodyOptions) {
+		bo.example = example
+		bo.examples = nil
+	}
+}
+
+// WithBodyExamples sets multiple examples for the request body and clears a single example.
+func WithBodyExamples(examples map[string]interface{}) func(*bodyOptions) {
+	return func(bo *bodyOptions) {
+		bo.examples = examples
+		bo.example = nil
+	}
+}
+
 // WithBody specifies the data structure that the EndPoint expects in the request body.
 func WithBody(body interface{}, opts ...func(*bodyOptions)) EndPointOption {
 	return func(e *EndPoint) {
@@ -295,10 +330,14 @@ func WithBody(body interface{}, opts ...func(*bodyOptions)) EndPointOption {
 			Content     interface{}
 			description string
 			required    *bool
+			example     interface{}
+			examples    map[string]interface{}
 		}{
 			Content:     body,
 			description: bo.description,
 			required:    bo.required,
+			example:     bo.example,
+			examples:    bo.examples,
 		}
 	}
 }
