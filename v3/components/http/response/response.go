@@ -20,6 +20,8 @@ type CustomResponse struct {
 	Model             any
 	returnCodeString  string
 	descriptionString string
+	example           interface{}
+	examples          map[string]interface{}
 }
 
 // ResponseGenerator is a struct that provides functionality to generate response schemas.
@@ -32,6 +34,30 @@ func New(model any, returnCode string, description string) CustomResponse {
 		returnCodeString:  returnCode,
 		descriptionString: description,
 	}
+}
+
+// WithExample sets an example for the response and clears multiple examples.
+func (c CustomResponse) WithExample(example interface{}) CustomResponse {
+	c.example = example
+	c.examples = nil
+	return c
+}
+
+// WithExamples sets multiple examples for the response and clears a single example.
+func (c CustomResponse) WithExamples(examples map[string]interface{}) CustomResponse {
+	c.examples = examples
+	c.example = nil
+	return c
+}
+
+// Example returns the example for the response.
+func (c CustomResponse) Example() interface{} {
+	return c.example
+}
+
+// Examples returns the examples for the response.
+func (c CustomResponse) Examples() map[string]interface{} {
+	return c.examples
 }
 
 // NewResponseGenerator creates a new instance of ResponseGenerator.

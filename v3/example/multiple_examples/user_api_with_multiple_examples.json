@@ -1,0 +1,612 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "User API with Multiple Examples",
+    "description": "This API demonstrates how to use multiple examples in OpenAPI 3.0 documentation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://sandbox.api.example.com/v1",
+      "description": "Sandbox server"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "List all users",
+        "description": "Returns a list of all users in the system",
+        "operationId": "get-_users",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of users to return",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "example": 10
+            },
+            "example": 10,
+            "examples": {
+              "largePage": {
+                "value": 50
+              },
+              "mediumPage": {
+                "value": 20
+              },
+              "smallPage": {
+                "value": 5
+              }
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Pagination cursor",
+            "schema": {
+              "type": "string",
+              "example": "abc123xyz456"
+            },
+            "example": "abc123xyz456",
+            "examples": {
+              "firstPage": {
+                "value": "cursor-001"
+              },
+              "lastPage": {
+                "value": "cursor-end"
+              },
+              "secondPage": {
+                "value": "cursor-002"
+              }
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filter by user role",
+            "schema": {
+              "type": "string",
+              "example": "admin"
+            },
+            "example": "admin",
+            "examples": {
+              "adminRole": {
+                "value": "admin"
+              },
+              "allRoles": {
+                "value": "admin,user,guest"
+              },
+              "guestRole": {
+                "value": "guest"
+              },
+              "userRole": {
+                "value": "user"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/main.User"
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "username": "john_doe",
+                    "email": "john@example.com",
+                    "first_name": "John",
+                    "last_name": "Doe"
+                  }
+                ],
+                "examples": {
+                  "emptyResult": {
+                    "value": []
+                  },
+                  "multipleUsers": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "username": "john_doe",
+                        "email": "john@example.com",
+                        "first_name": "John",
+                        "last_name": "Doe"
+                      },
+                      {
+                        "id": 2,
+                        "username": "jane_smith",
+                        "email": "jane@example.com",
+                        "first_name": "Jane",
+                        "last_name": "Smith"
+                      }
+                    ]
+                  },
+                  "singleUser": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "username": "john_doe",
+                        "email": "john@example.com",
+                        "first_name": "John",
+                        "last_name": "Doe"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.ErrorResponse"
+                },
+                "example": {
+                  "error": true,
+                  "message": "Invalid query parameters"
+                },
+                "examples": {
+                  "invalidCursor": {
+                    "value": {
+                      "error": true,
+                      "message": "Invalid cursor format"
+                    }
+                  },
+                  "invalidLimit": {
+                    "value": {
+                      "error": true,
+                      "message": "Limit must be between 1 and 100"
+                    }
+                  },
+                  "invalidRole": {
+                    "value": {
+                      "error": true,
+                      "message": "Role must be one of: admin, user, guest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.ErrorResponse"
+                },
+                "example": {
+                  "error": true,
+                  "message": "Authentication required"
+                },
+                "examples": {
+                  "expiredToken": {
+                    "value": {
+                      "error": true,
+                      "message": "Authorization token has expired"
+                    }
+                  },
+                  "invalidToken": {
+                    "value": {
+                      "error": true,
+                      "message": "Invalid authorization token"
+                    }
+                  },
+                  "missingToken": {
+                    "value": {
+                      "error": true,
+                      "message": "Authorization token is missing"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Create a new user",
+        "description": "Creates a new user in the system",
+        "operationId": "post-_users",
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/main.CreateUserRequest"
+              },
+              "example": {
+                "username": "new_user_example",
+                "email": "new@example.com",
+                "first_name": "New",
+                "last_name": "User",
+                "password": "SecurePassword123!"
+              },
+              "examples": {
+                "adminUser": {
+                  "value": {
+                    "username": "admin_user",
+                    "email": "admin@example.com",
+                    "first_name": "Admin",
+                    "last_name": "User",
+                    "password": "AdminSecurePassword123!"
+                  }
+                },
+                "completeUser": {
+                  "value": {
+                    "username": "complete_user",
+                    "email": "complete@example.com",
+                    "first_name": "Complete",
+                    "last_name": "User",
+                    "password": "VerySecurePassword123!"
+                  }
+                },
+                "minimalUser": {
+                  "value": {
+                    "username": "minimal",
+                    "email": "minimal@example.com",
+                    "first_name": "Min",
+                    "last_name": "User",
+                    "password": "Password123!"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.User"
+                },
+                "example": {
+                  "id": 12345,
+                  "username": "new_user_example",
+                  "email": "new@example.com",
+                  "first_name": "New",
+                  "last_name": "User"
+                },
+                "examples": {
+                  "adminUser": {
+                    "value": {
+                      "id": 30001,
+                      "username": "admin_user",
+                      "email": "admin@example.com",
+                      "first_name": "Admin",
+                      "last_name": "User"
+                    }
+                  },
+                  "premiumUser": {
+                    "value": {
+                      "id": 20001,
+                      "username": "premium_user",
+                      "email": "premium@example.com",
+                      "first_name": "Premium",
+                      "last_name": "User"
+                    }
+                  },
+                  "regularUser": {
+                    "value": {
+                      "id": 10001,
+                      "username": "regular_user",
+                      "email": "regular@example.com",
+                      "first_name": "Regular",
+                      "last_name": "User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.ErrorResponse"
+                },
+                "example": {
+                  "error": true,
+                  "message": "Invalid user data"
+                },
+                "examples": {
+                  "emailTaken": {
+                    "value": {
+                      "error": true,
+                      "message": "Email is already registered"
+                    }
+                  },
+                  "invalidEmail": {
+                    "value": {
+                      "error": true,
+                      "message": "Email must be a valid email address"
+                    }
+                  },
+                  "missingUsername": {
+                    "value": {
+                      "error": true,
+                      "message": "Username is required"
+                    }
+                  },
+                  "usernameTaken": {
+                    "value": {
+                      "error": true,
+                      "message": "Username is already taken"
+                    }
+                  },
+                  "weakPassword": {
+                    "value": {
+                      "error": true,
+                      "message": "Password must be at least 8 characters and contain uppercase, lowercase, and special characters"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.ErrorResponse"
+                },
+                "example": {
+                  "error": true,
+                  "message": "Username or email already exists"
+                },
+                "examples": {
+                  "bothConflict": {
+                    "value": {
+                      "error": true,
+                      "message": "Both username and email are already in use"
+                    }
+                  },
+                  "emailConflict": {
+                    "value": {
+                      "error": true,
+                      "message": "Email 'admin@example.com' is already registered"
+                    }
+                  },
+                  "usernameConflict": {
+                    "value": {
+                      "error": true,
+                      "message": "Username 'admin' is already taken"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get a specific user",
+        "description": "Returns detailed information about a specific user",
+        "operationId": "get-_users_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 12345
+            },
+            "example": 12345,
+            "examples": {
+              "adminUserId": {
+                "value": 30001
+              },
+              "nonExistentId": {
+                "value": 99999
+              },
+              "premiumUserId": {
+                "value": 20001
+              },
+              "regularUserId": {
+                "value": 10001
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.User"
+                },
+                "example": {
+                  "id": 12345,
+                  "username": "john_doe",
+                  "email": "john@example.com",
+                  "first_name": "John",
+                  "last_name": "Doe"
+                },
+                "examples": {
+                  "adminUser": {
+                    "value": {
+                      "id": 30001,
+                      "username": "admin_user",
+                      "email": "admin@example.com",
+                      "first_name": "Admin",
+                      "last_name": "User"
+                    }
+                  },
+                  "premiumUser": {
+                    "value": {
+                      "id": 20001,
+                      "username": "premium_user",
+                      "email": "premium@example.com",
+                      "first_name": "Premium",
+                      "last_name": "User"
+                    }
+                  },
+                  "regularUser": {
+                    "value": {
+                      "id": 10001,
+                      "username": "regular_user",
+                      "email": "regular@example.com",
+                      "first_name": "Regular",
+                      "last_name": "User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/main.ErrorResponse"
+                },
+                "example": {
+                  "error": true,
+                  "message": "User not found"
+                },
+                "examples": {
+                  "deletedUser": {
+                    "value": {
+                      "error": true,
+                      "message": "User with ID 99999 was not found (may have been deleted)"
+                    }
+                  },
+                  "invalidId": {
+                    "value": {
+                      "error": true,
+                      "message": "Invalid user ID format"
+                    }
+                  },
+                  "neverExisted": {
+                    "value": {
+                      "error": true,
+                      "message": "No user has ever had ID 99999"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "main.CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "new@example.com"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "New"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "User"
+          },
+          "password": {
+            "type": "string",
+            "example": "securePassword123"
+          },
+          "username": {
+            "type": "string",
+            "example": "new_user"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "first_name",
+          "last_name",
+          "password"
+        ]
+      },
+      "main.ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "example": "true"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid request"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ]
+      },
+      "main.User": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "John"
+          },
+          "id": {
+            "type": "integer",
+            "example": 12345
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "username": {
+            "type": "string",
+            "example": "john_doe"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "first_name",
+          "last_name"
+        ]
+      }
+    }
+  }
+}

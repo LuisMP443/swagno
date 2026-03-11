@@ -17,19 +17,42 @@ func appendResponses(sourceResponses map[string]endpoint.JsonResponse, additiona
 
 	for _, resp := range additionalResponses {
 		var responseSchema *parameter.JsonResponseSchema
+		var example interface{}
+		var examples map[string]interface{}
 
 		switch respType := resp.(type) {
 		case response.CustomResponse:
 			responseSchema = responseGenerator.Generate(respType.Model)
+			example = respType.Example()
+			examples = respType.Examples()
 		case response.Response:
 			responseSchema = responseGenerator.Generate(respType)
 		}
 
 		// Support multiple content types, defaulting to application/json
+		jsonMediaType := endpoint.MediaType{
+			Schema: responseSchema,
+		}
+
+		// Add example if available
+		if example != nil {
+			jsonMediaType.Example = example
+		}
+
+		// Add examples if available
+		if examples != nil {
+			// Convert raw examples to proper ComponentExample objects
+			exampleObjects := make(map[string]parameter.ComponentExample)
+			for key, value := range examples {
+				exampleObjects[key] = parameter.ComponentExample{
+					Value: value,
+				}
+			}
+			jsonMediaType.Examples = exampleObjects
+		}
+
 		content := map[string]endpoint.MediaType{
-			string(mime.JSON): {
-				Schema: responseSchema,
-			},
+			string(mime.JSON): jsonMediaType,
 		}
 
 		// TODO: Add support for other content types based on endpoint configuration
@@ -108,18 +131,42 @@ func (o *OpenAPI) generateOpenAPIJson() {
 			content := map[string]endpoint.MediaType{}
 
 			for _, m := range je.Consume {
-				content[string(m)] = endpoint.MediaType{
+				mediaType := endpoint.MediaType{
 					Schema: bjp.Schema,
 				}
+
+				// Add example if available
+				if bjp.Example != nil {
+					mediaType.Example = bjp.Example
+				}
+
+				// Add examples if available
+				if bjp.Examples != nil {
+					mediaType.Examples = bjp.Examples
+				}
+
+				content[string(m)] = mediaType
 			}
 
 			// Add form-data support if needed
 			for _, param := range e.Params() {
 				if param.Location() == parameter.Form {
-					content["multipart/form-data"] = endpoint.MediaType{
+					mediaType := endpoint.MediaType{
 						Schema: bjp.Schema,
 						// TODO: Add encoding configuration for form fields
 					}
+
+					// Add example if available
+					if bjp.Example != nil {
+						mediaType.Example = bjp.Example
+					}
+
+					// Add examples if available
+					if bjp.Examples != nil {
+						mediaType.Examples = bjp.Examples
+					}
+
+					content["multipart/form-data"] = mediaType
 					break
 				}
 			}
